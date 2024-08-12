@@ -1,43 +1,38 @@
-﻿namespace ServerCore
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ServerCore
 {
-    class SpinLock()
+    class Lock()
     {
-         int _locked= 0;
+        AutoResetEvent _available = new AutoResetEvent(true);
+
         public void Acquire()
-        { 
-            while(true)
-            {
-                int original = Interlocked.CompareExchange(ref _locked, 1, 0);
-                if (original == 0)
-                {
-                    break;
-                }
-                //Thread.Sleep(1);
-                //Thread.Sleep(0);
-                Thread.Yield();
-            }
-            
+        {
+            _available.WaitOne(); //입장 시도
         }
 
         public void Release()
         {
-            _locked = 0;
+            _available.Set();
         }
     }
 
-    class Program
+    class AutoResetEvent_Test()
     {
-        static int number = 0;
-        static SpinLock _lock = new SpinLock();
+        static int num = 0;
+        static Lock _lock = new Lock();
 
         static void Thread1()
         {
-            for(int i = 0;i<100000;i++)
+            for(int i = 0; i<100000;i++)
             {
                 _lock.Acquire();
-                number++;
+                num++;
                 _lock.Release();
-
             }
         }
 
@@ -46,7 +41,7 @@
             for (int i = 0; i < 100000; i++)
             {
                 _lock.Acquire();
-                number--;
+                num--;
                 _lock.Release();
             }
         }
@@ -55,13 +50,11 @@
         //{
         //    Task t1 = new Task(Thread1);
         //    Task t2 = new Task(Thread2);
-
         //    t1.Start();
         //    t2.Start();
-
         //    Task.WaitAll(t1,t2);
-
-        //    Console.WriteLine(number);
+        //    Console.WriteLine(num);
         //}
+
     }
 }
